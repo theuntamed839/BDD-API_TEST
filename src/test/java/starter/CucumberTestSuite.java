@@ -1,4 +1,4 @@
-package starter.petstore;
+package starter;
 
 import io.cucumber.junit.CucumberOptions;
 import net.serenitybdd.cucumber.CucumberWithSerenity;

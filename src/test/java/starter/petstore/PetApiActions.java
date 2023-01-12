@@ -28,10 +28,6 @@ public class PetApiActions extends UIInteractions {
         return newId;
     }
 
-//    @When("I ask for a pet using Kitty's ID: {0}")
-//    public void whenIAskForAPetWithId(Long id) {
-//        when().get("/" + id);
-//    }
     @When("I ask for a pet using Kitty's ID: {long}")
     public void whenIAskForAPetWithId(Long id) {
         when().get("/" + id);
@@ -48,9 +44,14 @@ public class PetApiActions extends UIInteractions {
         when().get("/" + previousStepData);
     }
 
+    @Then("I get a {int} error")
+    public void iGetAError(int arg0) {
+        then().statusCode(arg0);
+    }
 
-//    @When("I ask for a pet using Kitty's ID: {int}")
-//    public void iAskForAPetUsingKittySID(int arg0) {
-//    }
+    @When("I ask for a pet using a {string} ID {string}")
+    public void iAskForAPetUsingANonExistingID(String typeOfId, String arg0) {
+        when().get("https://petstore.swagger.io/v2/pet" + arg0);
+    }
 }
 
