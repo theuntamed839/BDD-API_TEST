@@ -95,7 +95,7 @@ public class BookingApiActions extends UIInteractions {
                 .header("Content-Type", "application/json")
                 .contentType(ContentType.JSON).post().getBody().jsonPath().get("token");
         Serenity.getCurrentSession().put("token", token);
-        Booking booking = new Booking("Jim", "Brown", 111, true, new Bookingdates("2018-01-01", "2019-01-01"), "Breakfast");
+        Booking booking = new Booking("Jim", "Brown", 111, true, new Bookingdates("2018-01-01", "2019-01-11"), "Breakfast");
         Response response = given()
                 .baseUri("https://restful-booker.herokuapp.com")
                 .basePath("/booking")
@@ -104,6 +104,7 @@ public class BookingApiActions extends UIInteractions {
                 .header("Content-Type", "application/json")
                 .contentType(ContentType.JSON).post();
         Serenity.getCurrentSession().put("bookingId", response.getBody().jsonPath().get("bookingid"));
+        System.out.println(Serenity.getCurrentSession().get("bookingId"));
     }
 
     @When("I get the booking by id")
@@ -131,6 +132,23 @@ public class BookingApiActions extends UIInteractions {
 
     }
 
+    @Then("I update the booking with new values for firstname {string} and lastname {string}")
+    public void iUpdateTheBookingWithNewValuesForFirstnameAndLastname(String firstName, String lastName) {
+        String token = (String) (Serenity.getCurrentSession().get("token"));
+        Booking booking = new Booking();
+        booking.setFirstname(firstName);
+        booking.setLastname(lastName);
+        int id = (int) (Serenity.getCurrentSession().get("bookingId"));
+        given()
+                .baseUri("https://restful-booker.herokuapp.com")
+                .basePath("/booking/" + id)
+                .header("Cookie", "token=" + token )
+                .body(booking, ObjectMapperType.GSON)
+                .header("Content-Type", "application/json")
+                .contentType(ContentType.JSON).patch();
+
+    }
+
     @When("I get the booking by invalid id")
     public void iGetTheBookingByInvalidId() {
         String response = given()
@@ -140,6 +158,8 @@ public class BookingApiActions extends UIInteractions {
                 .contentType(ContentType.JSON).get().body().asString();
         Serenity.getCurrentSession().put("responseData", response);
     }
+
+
 
     @When("I delete the booking")
     public void theTokenForAuthWeWantToDeleteBookingWithIdAs() {
@@ -153,4 +173,7 @@ public class BookingApiActions extends UIInteractions {
                 .header("Content-Type", "application/json")
                 .contentType(ContentType.JSON).delete();
     }
+
+
+
 }
