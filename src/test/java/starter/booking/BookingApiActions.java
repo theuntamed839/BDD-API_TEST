@@ -1,14 +1,18 @@
 package starter.booking;
+import com.google.gson.Gson;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
+import io.restassured.response.Response;
 import net.serenitybdd.core.Serenity;
 import net.serenitybdd.core.steps.UIInteractions;
 import org.hamcrest.Matchers;
+import org.junit.Assert;
 
 import static net.serenitybdd.rest.SerenityRest.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class BookingApiActions extends UIInteractions {
     @Given("that token is generated")
@@ -65,5 +69,75 @@ public class BookingApiActions extends UIInteractions {
                 .body("{ \"firstname\": \"" + firstName + "\", \"lastname\": \"" + lastName + "\", \"totalprice\": " + totalPrice + ", \"bookingdates\": { \"checkin\": \"" + checkIn + "\", \"checkout\": \"" + checkOut + "\" } }")
                 .header("Content-Type", "application/json")
                 .contentType(ContentType.JSON).put();
+    }
+
+    @When("I get the booking with id {string}")
+    public void iGetTheBookingWithId(String id) {
+        String response = given()
+                .baseUri("https://restful-booker.herokuapp.com")
+                .basePath("/booking/" + id)
+                .accept(ContentType.JSON)
+                .contentType(ContentType.JSON).get().body().asString();
+        Serenity.getCurrentSession().put("responseData", response);
+    }
+
+    @Then("the response code should be {int}")
+    public void theResponseCodeShouldBe(int statusCode) {
+        then().statusCode(statusCode);
+    }
+
+    @Given("I have a booking")
+    public void iHaveABooking() {
+        String token = given()
+                .baseUri("https://restful-booker.herokuapp.com")
+                .basePath("/auth")
+                .body("{ \"username\": \"admin\", \"password\": \"password123\" }")
+                .header("Content-Type", "application/json")
+                .contentType(ContentType.JSON).post().getBody().jsonPath().get("token");
+        Serenity.getCurrentSession().put("token", token);
+        Booking booking = new Booking("Jim", "Brown", 111, true, new Bookingdates("2018-01-01", "2019-01-01"), "Breakfast");
+        Response response = given()
+                .baseUri("https://restful-booker.herokuapp.com")
+                .basePath("/booking")
+                .header("Cookie", "token=" + token )
+                .body(booking, ObjectMapperType.GSON)
+                .header("Content-Type", "application/json")
+                .contentType(ContentType.JSON).post();
+        Serenity.getCurrentSession().put("bookingId", response.getBody().jsonPath().get("bookingid"));
+    }
+
+    @When("I get the booking by id")
+    public void iGetTheBookingById() {
+        int id = (int) (Serenity.getCurrentSession().get("bookingId"));
+        String response = given()
+                .baseUri("https://restful-booker.herokuapp.com")
+                .basePath("/booking/" + id)
+                .header("Content-Type", "application/json")
+                .contentType(ContentType.JSON).get().body().asString();
+        Serenity.getCurrentSession().put("responseData", response);
+    }
+
+    @Then("I should get the booking")
+    public void iShouldGetTheBooking() {
+        String response = (String) (Serenity.getCurrentSession().get("responseData"));
+        Booking booking = new Gson().fromJson(response, Booking.class);
+        Assert.assertEquals("Jim", booking.getFirstname());
+        Assert.assertEquals("Brown", booking.getLastname());
+        Assert.assertEquals(111, booking.getTotalprice());
+        Assert.assertTrue(booking.isDepositpaid());
+        Assert.assertEquals("2018-01-01", booking.getBookingdates().getCheckin());
+        Assert.assertEquals("2019-01-01", booking.getBookingdates().getCheckout());
+        Assert.assertEquals("Breakfast", booking.getAdditionalneeds());
+
+    }
+
+    @When("I get the booking by invalid id")
+    public void iGetTheBookingByInvalidId() {
+        String response = given()
+                .baseUri("https://restful-booker.herokuapp.com")
+                .basePath("/booking/-1")
+                .header("Content-Type", "application/json")
+                .contentType(ContentType.JSON).get().body().asString();
+        Serenity.getCurrentSession().put("responseData", response);
     }
 }
