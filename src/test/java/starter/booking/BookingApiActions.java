@@ -140,4 +140,17 @@ public class BookingApiActions extends UIInteractions {
                 .contentType(ContentType.JSON).get().body().asString();
         Serenity.getCurrentSession().put("responseData", response);
     }
+
+    @When("I delete the booking")
+    public void theTokenForAuthWeWantToDeleteBookingWithIdAs() {
+
+        String token = (String) (Serenity.getCurrentSession().get("token"));
+        int id = (int) (Serenity.getCurrentSession().get("bookingId"));
+        given()
+                .baseUri("https://restful-booker.herokuapp.com")
+                .basePath("/booking/" + id)
+                .header("Cookie", "token=" + token )
+                .header("Content-Type", "application/json")
+                .contentType(ContentType.JSON).delete();
+    }
 }
